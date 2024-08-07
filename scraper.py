@@ -1,8 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
 import pprint
+from time import sleep
 
-res = requests.get('https://news.ycombinator.com')
+
+res = requests.get(f'https://news.ycombinator.com/news')
 soup = BeautifulSoup(res.text, 'html.parser')
 links = soup.select('.titleline > a')
 subtext = soup.select('.subtext')
@@ -30,4 +32,17 @@ def create_custom_hn(links, subtext):
     return sort_stories_by_votes(hn)
 
 
-pprint.pprint(create_custom_hn(links, subtext))
+def scrape_pages(links, subtext, num=1):
+    if num > 1:
+        for i in range(2, num + 1):
+            sleep(0.1)
+            res = requests.get(f'https://news.ycombinator.com/news?p={i}')
+            soup = BeautifulSoup(res.text, 'html.parser')
+            links += soup.select('.titleline > a')
+            subtext += soup.select('.subtext')
+            return (create_custom_hn(links, subtext))
+    else:
+        return create_custom_hn(links, subtext)
+
+
+pprint.pprint(scrape_pages(links, subtext))
