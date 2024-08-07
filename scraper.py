@@ -1,22 +1,33 @@
 import requests
 from bs4 import BeautifulSoup
+import pprint
 
 res = requests.get('https://news.ycombinator.com')
 soup = BeautifulSoup(res.text, 'html.parser')
 links = soup.select('.titleline > a')
-votes = soup.select('.score')
+subtext = soup.select('.subtext')
 
 
-def create_custom_hn(links, votes):
+def sort_stories_by_votes(hnlsit):
+    return sorted(hnlsit, key=lambda k: k['votes'], reverse=True)
+
+
+def create_custom_hn(links, subtext):
     hn = []
+
     for index, item in enumerate(links):
-        title = links[index].getText()
-        href = links[index].get('href', None)
-        hn.append({'title': title,
-                   'link': href})
-        points = votes[index].getText()
-        print(points)
-    return hn
+        title = item.getText()
+        href = item.get('href', None)
+        vote = subtext[index].select('.score')
+
+        if len(vote):
+            points = int(vote[0].getText().replace(' points', ''))
+            if points > 99:
+                hn.append({'title': title,
+                           'link': href,
+                           'votes': points})
+
+    return sort_stories_by_votes(hn)
 
 
-create_custom_hn(links, votes)
+pprint.pprint(create_custom_hn(links, subtext))
